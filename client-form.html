@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Be Forward Aruba - Client Info Form</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+  <script>
+    (function() {
+      emailjs.init("yg6Lrw4njFvKo0M-M");
+    })();
+  </script>
+  <style>
+    .container {
+      background-color: #fff !important;
+      color: #000 !important;
+    }
+
+    input, select, textarea {
+      background-color: #fff !important;
+      color: #000 !important;
+      border: 1px solid #ccc;
+    }
+
+    label {
+      color: #000 !important;
+    }
+
+    input::file-selector-button {
+      background-color: #FFA500;
+      color: #000;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="https://beforwardaruba.github.io/webapp/logo.png" alt="Be Forward Aruba Logo" style="max-width: 200px; margin-bottom: 20px;" />
+    <h1 style="color: #000;">Submit Your Information</h1>
+
+    <form id="client-form">
+      
+      <input type="text" name="firstName" placeholder="First Name" required />
+      <input type="text" name="lastName" placeholder="Last Name" required />
+      <input type="email" name="email" placeholder="Email" required />
+      <input type="text" name="address" placeholder="Address" required />
+      <input type="text" name="city" placeholder="City" required />
+      <input type="text" value="Aruba" disabled />
+      <input type="tel" name="phoneNumber" placeholder="Phone Number" required />
+      <input type="text" name="persoonsnummer" placeholder="Persoonsnummer (8 digits only)" required pattern="\d{8}" maxlength="8" inputmode="numeric" />
+
+      <label>Upload ID (Image Only: JPG, PNG, GIF)</label>
+      <input type="file" id="idFile" accept=".jpg,.jpeg,.png,.gif" required />
+
+      <!-- This hidden input will hold the Imgbb image URL -->
+      <input type="hidden" name="id_url" />
+
+      <!-- Honeypot anti-spam -->
+      <input type="text" name="hidden_trap" style="display:none;" tabindex="-1" autocomplete="off" />
+
+      <button type="submit">Submit</button>
+    </form>
+
+    <div id="form-result" style="margin-top:20px;"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('client-form');
+    const result = document.getElementById('form-result');
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      if (form.hidden_trap.value !== "") {
+        result.innerHTML = "<p style='color:red;'>⚠️ Bot detected. Submission blocked.</p>";
+        return;
+      }
+
+      const persoonsnummer = form.persoonsnummer.value;
+      if (!/^\d{8}$/.test(persoonsnummer)) {
+        result.innerHTML = "<p style='color:red;'>❌ Persoonsnummer must be exactly 8 digits.</p>";
+        return;
+      }
+
+      const fileInput = document.getElementById("idFile");
+      const file = fileInput.files[0];
+      if (!file || !file.type.startsWith("image/")) {
+        result.innerHTML = "<p style='color:red;'>❌ Please upload a valid image file.</p>";
+        return;
+      }
+
+      result.innerHTML = "📤 Uploading ID image...";
+
+      try {
+        const reader = new FileReader();
+        reader.onloadend = async function () {
+          const base64data = reader.result.split(',')[1]; // Strip "data:image/png;base64,"
+          const formData = new FormData();
+          formData.append("image", base64data);
+
+          const uploadRes = await fetch("https://api.imgbb.com/1/upload?key=a5d7a6dfeea69f280bcd15bba1de0116", {
+            method: "POST",
+            body: formData
+          });
+
+          const uploadJson = await uploadRes.json();
+          if (!uploadJson.success) {
+            throw new Error("Image upload failed");
+          }
+
+          const link = uploadJson.data.url;
+          form.id_url.value = link;
+
+          result.innerHTML = "📧 Sending your submission...";
+
+          emailjs.sendForm('service_z4947zg', 'template_lc1qs7d', form)
+            .then(() => {
+              result.innerHTML = `
+                <div style="background: #e0ffe0; border-left: 5px solid #2ecc71; padding: 16px; border-radius: 6px; margin-top: 20px;">
+                  <h3 style="margin-top: 0;">🎉 Thank you!</h3>
+                  <p>Your form was successfully submitted. We will contact you shortly.</p>
+                </div>
+              `;
+              form.reset();
+            }, (error) => {
+              console.error('EmailJS FAILED:', error);
+              result.innerHTML = "<p style='color:red;'>❌ Email failed. Please try again later.</p>";
+            });
+        };
+
+        reader.readAsDataURL(file);
+      } catch (err) {
+        console.error("ImgBB upload error:", err);
+        result.innerHTML = "<p style='color:red;'>❌ Upload error. Try again later.</p>";
+      }
+    });
+  </script>
+</body>
+</html>
