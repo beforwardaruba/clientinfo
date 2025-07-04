@@ -1,154 +1,108 @@
 # 📬 Be Forward Aruba - Client Submission Form
 
-This is a lightweight client intake web app built for **Be Forward Aruba**. It allows customers to securely submit their personal information for vehicle import processing.
+This web form is designed for **Be Forward Aruba** to collect client information for vehicle import processing, including their personal details and an image of their identification document.
+
+Built with modern, privacy-focused client-side tools, this form requires **no backend**, offers real-time **email delivery**, and securely uploads ID images to **ImgBB**.
 
 ---
 
 ## ✅ Features
 
-### 🎯 Simple, User-Friendly Form
-- Collects:
-  - First name
-  - Last name
-  - Email
-  - Address
-  - City (Aruba is locked in)
-  - Persoonsnummer (8-digit validation)
-
-### ✉️ Instant Email Notifications
-- Sends all submission details to your inbox using **Resend**
-- No sensitive API keys are exposed in the frontend
+### 📄 Client Information Collection
+The form gathers:
+- First Name & Last Name
+- Email Address
+- Phone Number
+- Physical Address (City + Aruba pre-filled)
+- Persoonsnummer (8-digit validated)
+- ID image upload (JPG, PNG, GIF)
 
 ### 🛡️ Spam Protection
-- Honeypot field included (invisible to users, catches bots)
-- Input validation on the `persoonsnummer` field (must be exactly 8 digits)
+- **Honeypot Field**: A hidden field traps bots that attempt to fill it
+- **Pattern Validation**: Persoonsnummer must be exactly 8 digits
+- **Client-side Input Validation**: All required fields are checked in-browser
 
-### 🔒 No Public API Keys
-- The form talks only to a secured Supabase Edge Function
-- No `SUPABASE_URL` or `anon key` exposed in `client-form.html`
+### 📷 Image Upload via ImgBB
+- Files are base64-encoded and uploaded using your private ImgBB API key
+- Returns a public link which is included in the email
+- No server required, secure and lightweight
+
+### ✉️ Email Notification with EmailJS
+- Sends all submitted data (including ID image URL) to your email
+- Powered by EmailJS v3 SDK
+- Fully client-side, with no need to expose any server credentials
 
 ---
 
 ## 🧰 Technologies Used
 
-| Feature                | Technology            |
-|------------------------|------------------------|
-| **Frontend UI**        | HTML, CSS (custom)     |
-| **Form Validation**    | Native HTML5 + JS      |
-| **Spam Protection**    | Honeypot field         |
-| **Email Delivery**     | [Resend](https://resend.com) (via Edge Function) |
-| **Secure Backend**     | [Supabase Edge Functions](https://supabase.com/docs/guides/functions) |
-| **Deployment Ready**   | Static hosting (Vercel, Netlify, etc.) |
+| Feature               | Technology           |
+|------------------------|----------------------|
+| Form Handling         | HTML, JavaScript     |
+| Spam Protection       | Honeypot Anti-Bot    |
+| File Upload           | [ImgBB API](https://api.imgbb.com/) |
+| Email Delivery        | [EmailJS](https://www.emailjs.com) |
+| Validation            | HTML5, Regex         |
+| Hosting Logo          | GitHub Pages         |
 
 ---
 
-## 📁 Folder Structure
+## 📁 Project Structure
 
 ```
 be-forward-client-form/
-├── client-form.html         # Main public-facing form (no secrets inside)
-├── style.css                # Clean styling, consistent with your quote app
-├── README.md                # You're reading this!
-└── src/
-    └── submit-client-form/
-        └── index.ts         # Supabase Edge Function: handles and emails the form submission
+├── client-form.html         # Main public form
+├── style.css                # Optional custom styling
+├── README.md                # This documentation
 ```
 
 ---
 
-## 🚀 How It Works
+## 🔧 Setup Instructions
 
-1. User fills out and submits the form
-2. Form sends a `POST` request to your **Supabase Edge Function** at:
+### 1. Update Your EmailJS Template
+In your `template_lc1qs7d`, include the following template variables:
 
-```
-https://your-project.supabase.co/functions/v1/submit-client-form
-```
-
-3. The function:
-   - Reads form data from the request body
-   - Sends an email via Resend to notify you
-
----
-
-## 🛠️ Setup Guide
-
-### 1. Configure Supabase Edge Function
-
-In the Supabase CLI or Dashboard, deploy the function located at:
-
-```
-src/submit-client-form/index.ts
-```
-
-Make sure to add the following secret in your **function environment variables**:
-
-```env
-RESEND_API_KEY=your_resend_api_key
-```
-
-Then deploy the function:
-
-```bash
-supabase functions deploy submit-client-form
+```html
+<p><strong>Name:</strong> {{firstName}} {{lastName}}</p>
+<p><strong>Email:</strong> {{email}}</p>
+<p><strong>Phone Number:</strong> {{phoneNumber}}</p>
+<p><strong>Address:</strong> {{address}}, {{city}}, Aruba</p>
+<p><strong>Persoonsnummer:</strong> {{persoonsnummer}}</p>
+<p><strong>ID Image:</strong> <a href="{{id_url}}" target="_blank">View ID</a></p>
 ```
 
 ---
 
-### 2. Configure the Frontend
+### 2. Host the Form
 
-In `client-form.html`, ensure this fetch call matches your Supabase deployment:
-
-```js
-fetch("https://your-project.supabase.co/functions/v1/submit-client-form", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    firstName,
-    lastName,
-    email,
-    address,
-    city,
-    persoonsnummer
-  })
-});
-```
-
-> 🔐 There is **no need** to include any public Supabase keys in this version.
+You can upload this form to:
+- Vercel
+- Netlify
+- GitHub Pages
+- Any web hosting provider that serves static files
 
 ---
 
-### 3. Optional: Deploy Frontend
+## 💡 Tips
 
-You can host `client-form.html` on:
+- The logo is loaded from:  
+  `https://beforwardaruba.github.io/webapp/logo.png`
 
-- [Vercel](https://vercel.com)
-- [Netlify](https://netlify.com)
-- [GitHub Pages](https://pages.github.com)
-- Your own web server
-
----
-
-## 🧪 Sample Email Output
-
-You’ll receive an email like:
-
-```
-📬 New Client Submission
-
-Name: John Doe
-Email: john@example.com
-Address: Tanki Flip 14B, Oranjestad, Aruba
-Persoonsnummer: 12345678
-```
+- Ensure the browser has internet access so:
+  - Imgbb uploads succeed
+  - EmailJS can send emails
+  - Logo loads from GitHub
 
 ---
 
 ## 🆘 Support
 
-Need help or want to expand this further?
-- Add file attachments?
-- Store submissions in Supabase?
-- Add confirmation emails to clients?
+Need enhancements like:
+- Google reCAPTCHA
+- Supabase or Firebase backend
+- WhatsApp or auto-confirmation emails to clients?
 
-Just ask. 😊
+Let us know and we’ll help you build it.
+
+Built with care for **Be Forward Aruba** 🇦🇼
